@@ -11,13 +11,5 @@ import java.util.List;
 @RequestMapping("/api/applications")
 public class ApplicationController {
 
-    @Autowired
-    private ApplicationService applicationService;
 
-    // Endpoint to get all applications, default actionTaken = 1
-    @GetMapping("/action-taken")
-    public List<Application> getApplicationsByActionTaken(
-            @RequestParam(value = "actionTaken", defaultValue = "1") Short actionTaken) {
-        return applicationService.getApplicationsWithActionTaken(actionTaken);
-    }
 }

@@ -10,10 +10,4 @@ import java.util.List;
 @Service
 public class ApplicationService {
 
-    @Autowired
-    private ApplicationRepository applicationRepository;
-
-    public List<Application> getApplicationsWithActionTaken(Short actionTaken) {
-        return applicationRepository.findByActionTaken(actionTaken);
-    }
 }
