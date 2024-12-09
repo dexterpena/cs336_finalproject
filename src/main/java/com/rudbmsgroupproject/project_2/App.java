@@ -24,7 +24,14 @@ public class App implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		// Call the method to connect to the database
-		databaseService.connectToDatabase();
+
+		try {
+			databaseService.connectToDatabase();
+			System.out.println("Connected to the database.");
+		} catch (Exception e) {
+			System.err.println("Error connecting to the database: " + e.getMessage());
+			e.printStackTrace();
+		}
 		appCommands.menu();
 
 		// Call the method to print the database schema

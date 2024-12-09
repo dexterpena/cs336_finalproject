@@ -9,17 +9,17 @@ public class Msamd {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "msamd_code")
-    private Integer code;
+    private Integer id;
 
     @Column(name = "msamd_name")
     private String name;
 
-    public Integer getCode() {
-        return code;
+    public Integer getId() {
+        return id;
     }
 
-    public void setCode(Integer code) {
-        this.code = code;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
     public String getName() {

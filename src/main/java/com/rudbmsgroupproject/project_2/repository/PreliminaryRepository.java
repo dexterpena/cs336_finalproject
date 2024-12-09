@@ -11,6 +11,9 @@ import java.util.List;
 @Repository
 public interface PreliminaryRepository extends JpaRepository<Preliminary, Integer> {
 
+    @Query("SELECT p FROM Preliminary p WHERE p.actionTaken = 1")
+    List<Preliminary> findAllByActionTaken();
+
     @Query("SELECT p FROM Preliminary p WHERE p.actionTaken = 1 AND " +
             "(:msamd IS NULL OR p.msamd IN :msamd) AND " +
             "(:minIncomeDebtRatio IS NULL OR :maxIncomeDebtRatio IS NULL OR " +

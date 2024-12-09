@@ -9,26 +9,27 @@ public class Loan_purpose {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "loan_purpose")
-    private Integer loan_purpose;
+    private Integer id;
 
     @Column(name = "loan_purpose_name")
-    private String loan_purpose_name;
+    private String name;
 
-    public Integer getLoan_purpose() {
-        return loan_purpose;
+    public Integer getId() {
+        return id;
     }
 
-    public void setLoan_purpose(Integer loan_purpose) {
-        this.loan_purpose = loan_purpose;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public String getLoan_purpose_name() {
-        return loan_purpose_name;
+    public String getName() {
+        return name;
     }
 
-    public void setLoan_purpose_name(String loan_purpose_name) {
-        this.loan_purpose_name = loan_purpose_name;
+    public void setName(String name) {
+        this.name = name;
     }
+
 }
 
 

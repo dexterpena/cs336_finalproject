@@ -3,17 +3,15 @@ package com.rudbmsgroupproject.project_2.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "county")
-public class County {
-
+@Table(name = "property_type")
+public class PropertyType {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "county_code")
+    @Column(name = "property_type")
     private Integer id;
 
-    @Column(name = "county_name")
+    @Column(name = "property_type_name")
     private String name;
-
 
     public Integer getId() {
         return id;

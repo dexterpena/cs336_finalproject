@@ -9,24 +9,24 @@ public class Loan_type {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "loan_type")
-    private Integer loan_type;
+    private Integer id;
 
     @Column(name = "loan_type_name")
-    private String loan_type_name;
+    private String name;
 
-    public Integer getLoan_type() {
-        return loan_type;
+    public Integer getId() {
+        return id;
     }
 
-    public void setLoan_type(Integer loan_type) {
-        this.loan_type = loan_type;
+    public void setId(Integer id) {
+        this.id = id;
     }
 
-    public String getLoan_type_name() {
-        return loan_type_name;
+    public String getName() {
+        return name;
     }
 
-    public void setLoan_type_name(String loan_type_name) {
-        this.loan_type_name = loan_type_name;
+    public void setName(String name) {
+        this.name = name;
     }
 }

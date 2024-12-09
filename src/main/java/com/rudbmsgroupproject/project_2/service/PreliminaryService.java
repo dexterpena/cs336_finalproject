@@ -13,6 +13,10 @@ public class PreliminaryService {
     @Autowired
     private PreliminaryRepository preliminaryRepository;
 
+    public List<Preliminary> getAllByActionTaken() {
+        return preliminaryRepository.findAllByActionTaken();
+    }
+
     public List<Preliminary> getFilteredPreliminaries(
             List<Integer> msamd,
             Double minIncomeDebtRatio,
