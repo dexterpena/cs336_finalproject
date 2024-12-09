@@ -77,15 +77,15 @@ public class DatabaseService {
         return getNameById("county", "county_code", "county_name", id);
     }
 
-    public String getLoanTypeNameById(short id) {
+    public String getLoanTypeNameById(int id) {
         return getNameById("loan_type", "loan_type", "loan_type_name", id);
     }
 
-    public String getLoanPurposeNameById(short id) {
+    public String getLoanPurposeNameById(int id) {
         return getNameById("loan_purpose", "loan_purpose", "loan_purpose_name", id);
     }
 
-    public String getPropertyTypeNameById(short id) {
+    public String getPropertyTypeNameById(int id) {
         return getNameById("property_type", "property_type", "property_type_name", id);
     }
 
@@ -114,15 +114,15 @@ public class DatabaseService {
         return getIdByName("county", "county_code", "county_name", name);
     }
 
-    public Short getLoanTypeIdByName(String name) {
+    public Integer getLoanTypeIdByName(String name) {
         return getIdByName("loan_type", "loan_type", "loan_type_name", name);
     }
 
-    public Short getLoanPurposeIdByName(String name) {
+    public Integer getLoanPurposeIdByName(String name) {
         return getIdByName("loan_purpose", "loan_purpose", "loan_purpose_name", name);
     }
 
-    public Short getPropertyTypeIdByName(String name) {
+    public Integer getPropertyTypeIdByName(String name) {
         return getIdByName("property_type", "property_type", "property_type_name", name);
     }
 

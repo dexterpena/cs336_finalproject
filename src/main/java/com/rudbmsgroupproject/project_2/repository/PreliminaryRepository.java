@@ -17,11 +17,11 @@ public interface PreliminaryRepository extends JpaRepository<Preliminary, Intege
     @Query("SELECT p FROM Preliminary p WHERE p.actionTaken = 1 AND " +
             "(:msamd IS NULL OR p.msamd IN :msamd) AND " +
             "(:minIncomeDebtRatio IS NULL OR :maxIncomeDebtRatio IS NULL OR " +
-            "p.applicantIncome000s / p.loanAmount000s BETWEEN :minIncomeDebtRatio AND :maxIncomeDebtRatio) AND " +
+            "(p.applicantIncome000s / p.loanAmount000s) BETWEEN :minIncomeDebtRatio AND :maxIncomeDebtRatio) AND " +
             "(:counties IS NULL OR p.countyCode IN :counties) AND " +
             "(:loanTypes IS NULL OR p.loanType IN :loanTypes) AND " +
-            "(:minTractIncome IS NULL OR :maxTractIncome IS NULL OR " +
-            "p.tractToMsamdIncome BETWEEN :minTractIncome AND :maxTractIncome) AND " +
+            "(:minTractIncome IS NULL OR p.tractToMsamdIncome >= :minTractIncome) AND " +  // Changed to separate conditions
+            "(:maxTractIncome IS NULL OR p.tractToMsamdIncome <= :maxTractIncome) AND " +  // Changed to separate conditions
             "(:loanPurposes IS NULL OR p.loanPurpose IN :loanPurposes) AND " +
             "(:propertyTypes IS NULL OR p.propertyType IN :propertyTypes) AND " +
             "(:ownerOccupancy IS NULL OR p.ownerOccupancy = :ownerOccupancy)")
@@ -30,10 +30,10 @@ public interface PreliminaryRepository extends JpaRepository<Preliminary, Intege
             @Param("minIncomeDebtRatio") Double minIncomeDebtRatio,
             @Param("maxIncomeDebtRatio") Double maxIncomeDebtRatio,
             @Param("counties") List<Integer> counties,
-            @Param("loanTypes") List<Short> loanTypes,
+            @Param("loanTypes") List<Integer> loanTypes,
             @Param("minTractIncome") Double minTractIncome,
             @Param("maxTractIncome") Double maxTractIncome,
-            @Param("loanPurposes") List<Short> loanPurposes,
-            @Param("propertyTypes") List<Short> propertyTypes,
-            @Param("ownerOccupancy") Short ownerOccupancy);
+            @Param("loanPurposes") List<Integer> loanPurposes,
+            @Param("propertyTypes") List<Integer> propertyTypes,
+            @Param("ownerOccupancy") Integer ownerOccupancy);
 }

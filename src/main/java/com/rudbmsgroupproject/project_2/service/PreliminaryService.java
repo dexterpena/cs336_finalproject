@@ -22,12 +22,12 @@ public class PreliminaryService {
             Double minIncomeDebtRatio,
             Double maxIncomeDebtRatio,
             List<Integer> counties,
-            List<Short> loanTypes,
+            List<Integer> loanTypes,
             Double minTractIncome,
             Double maxTractIncome,
-            List<Short> loanPurposes,
-            List<Short> propertyTypes,
-            Short ownerOccupancy) {
+            List<Integer> loanPurposes,
+            List<Integer> propertyTypes,
+            Integer ownerOccupancy) {
         return preliminaryRepository.findFilteredPreliminaries(msamd, minIncomeDebtRatio, maxIncomeDebtRatio, counties, loanTypes, minTractIncome, maxTractIncome, loanPurposes, propertyTypes, ownerOccupancy);
     }
 }

@@ -27,18 +27,18 @@ public class AppCommands {
     private Double minIncomeDebtRatio;
     private Double maxIncomeDebtRatio;
     private List<Integer> counties = new ArrayList<>();
-    private List<Short> loanTypes = new ArrayList<>();
+    private List<Integer> loanTypes = new ArrayList<>();
     private Double minTractIncome;
     private Double maxTractIncome;
-    private List<Short> loanPurposes = new ArrayList<>();
-    private List<Short> propertyTypes = new ArrayList<>();
-    private Short ownerOccupancy;
+    private List<Integer> loanPurposes = new ArrayList<>();
+    private List<Integer> propertyTypes = new ArrayList<>();
+    private Integer ownerOccupancy;
 
     private List<Integer> msamdIds = new ArrayList<>();
     private List<Integer> countyIds = new ArrayList<>();
-    private List<Short> loanTypeIds = new ArrayList<>();
-    private List<Short> loanPurposeIds = new ArrayList<>();
-    private List<Short> propertyTypeIds = new ArrayList<>();
+    private List<Integer> loanTypeIds = new ArrayList<>();
+    private List<Integer> loanPurposeIds = new ArrayList<>();
+    private List<Integer> propertyTypeIds = new ArrayList<>();
 
     @ShellMethod("Display the main menu")
     public void menu() {
@@ -287,7 +287,7 @@ public class AppCommands {
 
     private void addOwnerOccupancyFilter(Scanner scanner) {
         System.out.print("\nEnter owner occupancy: ");
-        ownerOccupancy = scanner.nextShort();
+        ownerOccupancy = scanner.nextInt();
         System.out.println("\nOwner occupancy filter added.");
     }
 
