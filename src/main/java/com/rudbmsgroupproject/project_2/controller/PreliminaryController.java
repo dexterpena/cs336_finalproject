@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api")
@@ -25,29 +26,65 @@ public class PreliminaryController {
     @Autowired
     private DatabaseService databaseService;
 
-    @GetMapping("/options/msamd")
-    public List<String> getMsamdList() {
-        return databaseService.getMsamdList();
+    // Cache variables
+    private List<Preliminary> cachedPreliminaries;
+    private Map<String, Object> cachedFilters;
+
+    private boolean filtersChanged(
+            List<Integer> msamd,
+            Double minIncomeDebtRatio,
+            Double maxIncomeDebtRatio,
+            List<Integer> counties,
+            List<Integer> loanTypes,
+            Double minTractIncome,
+            Double maxTractIncome,
+            List<Integer> loanPurposes,
+            List<Integer> propertyTypes,
+            Integer ownerOccupancy) {
+        if (cachedFilters == null)
+            return true;
+
+        return !Objects.equals(cachedFilters.get("msamd"), msamd) ||
+                !Objects.equals(cachedFilters.get("minIncomeDebtRatio"), minIncomeDebtRatio) ||
+                !Objects.equals(cachedFilters.get("maxIncomeDebtRatio"), maxIncomeDebtRatio) ||
+                !Objects.equals(cachedFilters.get("counties"), counties) ||
+                !Objects.equals(cachedFilters.get("loanTypes"), loanTypes) ||
+                !Objects.equals(cachedFilters.get("minTractIncome"), minTractIncome) ||
+                !Objects.equals(cachedFilters.get("maxTractIncome"), maxTractIncome) ||
+                !Objects.equals(cachedFilters.get("loanPurposes"), loanPurposes) ||
+                !Objects.equals(cachedFilters.get("propertyTypes"), propertyTypes) ||
+                !Objects.equals(cachedFilters.get("ownerOccupancy"), ownerOccupancy);
     }
 
-    @GetMapping("/options/counties")
-    public List<String> getCountyList() {
-        return databaseService.getCountyList();
+    private void updateCache(
+            List<Preliminary> preliminaries,
+            List<Integer> msamd,
+            Double minIncomeDebtRatio,
+            Double maxIncomeDebtRatio,
+            List<Integer> counties,
+            List<Integer> loanTypes,
+            Double minTractIncome,
+            Double maxTractIncome,
+            List<Integer> loanPurposes,
+            List<Integer> propertyTypes,
+            Integer ownerOccupancy) {
+        this.cachedPreliminaries = preliminaries;
+        this.cachedFilters = new HashMap<>();
+        cachedFilters.put("msamd", msamd);
+        cachedFilters.put("minIncomeDebtRatio", minIncomeDebtRatio);
+        cachedFilters.put("maxIncomeDebtRatio", maxIncomeDebtRatio);
+        cachedFilters.put("counties", counties);
+        cachedFilters.put("loanTypes", loanTypes);
+        cachedFilters.put("minTractIncome", minTractIncome);
+        cachedFilters.put("maxTractIncome", maxTractIncome);
+        cachedFilters.put("loanPurposes", loanPurposes);
+        cachedFilters.put("propertyTypes", propertyTypes);
+        cachedFilters.put("ownerOccupancy", ownerOccupancy);
     }
 
-    @GetMapping("/options/loanTypes")
-    public List<String> getLoanTypeList() {
-        return databaseService.getLoanTypeList();
-    }
-
-    @GetMapping("/options/loanPurposes")
-    public List<String> getLoanPurposeList() {
-        return databaseService.getLoanPurposeList();
-    }
-
-    @GetMapping("/options/propertyTypes")
-    public List<String> getPropertyTypeList() {
-        return databaseService.getPropertyTypeList();
+    private void clearCache() {
+        this.cachedPreliminaries = null;
+        this.cachedFilters = null;
     }
 
     @GetMapping("/mortgages")
@@ -65,63 +102,77 @@ public class PreliminaryController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "1000") int size) {
 
-        List<Integer> msamdIds = null;
-        if (msamd != null && !msamd.isEmpty()) {
-            List<String> msamdList = databaseService.getMsamdList();
-            msamdIds = msamd.stream()
-                    .filter(i -> i > 0 && i <= msamdList.size())
-                    .map(i -> databaseService.getMsamdIdByName(msamdList.get(i - 1)))
-                    .collect(Collectors.toList());
-        }
+        List<Preliminary> allPreliminaries;
 
-        List<Integer> countyIds = null;
-        if (counties != null && !counties.isEmpty()) {
-            List<String> countyList = databaseService.getCountyList();
-            countyIds = counties.stream()
-                    .filter(i -> i > 0 && i <= countyList.size())
-                    .map(i -> databaseService.getCountyIdByName(countyList.get(i - 1)))
-                    .collect(Collectors.toList());
-        }
+        if (cachedPreliminaries == null || filtersChanged(msamd, minIncomeDebtRatio, maxIncomeDebtRatio,
+                counties, loanTypes, minTractIncome, maxTractIncome, loanPurposes, propertyTypes, ownerOccupancy)) {
 
-        List<Integer> loanTypeIds = null;
-        if (loanTypes != null && !loanTypes.isEmpty()) {
-            List<String> loanTypeList = databaseService.getLoanTypeList();
-            loanTypeIds = loanTypes.stream()
-                    .filter(i -> i > 0 && i <= loanTypeList.size())
-                    .map(i -> databaseService.getLoanTypeIdByName(loanTypeList.get(i - 1)))
-                    .collect(Collectors.toList());
-        }
+            List<Integer> msamdIds = null;
+            if (msamd != null && !msamd.isEmpty()) {
+                List<String> msamdList = databaseService.getMsamdList();
+                msamdIds = msamd.stream()
+                        .filter(i -> i > 0 && i <= msamdList.size())
+                        .map(i -> databaseService.getMsamdIdByName(msamdList.get(i - 1)))
+                        .collect(Collectors.toList());
+            }
 
-        List<Integer> loanPurposeIds = null;
-        if (loanPurposes != null && !loanPurposes.isEmpty()) {
-            List<String> loanPurposeList = databaseService.getLoanPurposeList();
-            loanPurposeIds = loanPurposes.stream()
-                    .filter(i -> i > 0 && i <= loanPurposeList.size())
-                    .map(i -> databaseService.getLoanPurposeIdByName(loanPurposeList.get(i - 1)))
-                    .collect(Collectors.toList());
-        }
+            List<Integer> countyIds = null;
+            if (counties != null && !counties.isEmpty()) {
+                List<String> countyList = databaseService.getCountyList();
+                countyIds = counties.stream()
+                        .filter(i -> i > 0 && i <= countyList.size())
+                        .map(i -> databaseService.getCountyIdByName(countyList.get(i - 1)))
+                        .collect(Collectors.toList());
+            }
 
-        List<Integer> propertyTypeIds = null;
-        if (propertyTypes != null && !propertyTypes.isEmpty()) {
-            List<String> propertyTypeList = databaseService.getPropertyTypeList();
-            propertyTypeIds = propertyTypes.stream()
-                    .filter(i -> i > 0 && i <= propertyTypeList.size())
-                    .map(i -> databaseService.getPropertyTypeIdByName(propertyTypeList.get(i - 1)))
-                    .collect(Collectors.toList());
-        }
+            List<Integer> loanTypeIds = null;
+            if (loanTypes != null && !loanTypes.isEmpty()) {
+                List<String> loanTypeList = databaseService.getLoanTypeList();
+                loanTypeIds = loanTypes.stream()
+                        .filter(i -> i > 0 && i <= loanTypeList.size())
+                        .map(i -> databaseService.getLoanTypeIdByName(loanTypeList.get(i - 1)))
+                        .collect(Collectors.toList());
+            }
 
-        // Get filtered list using converted IDs
-        List<Preliminary> allPreliminaries = preliminaryService.getFilteredPreliminaries(
-                msamdIds,
-                minIncomeDebtRatio,
-                maxIncomeDebtRatio,
-                countyIds,
-                loanTypeIds,
-                minTractIncome,
-                maxTractIncome,
-                loanPurposeIds,
-                propertyTypeIds,
-                ownerOccupancy);
+            List<Integer> loanPurposeIds = null;
+            if (loanPurposes != null && !loanPurposes.isEmpty()) {
+                List<String> loanPurposeList = databaseService.getLoanPurposeList();
+                loanPurposeIds = loanPurposes.stream()
+                        .filter(i -> i > 0 && i <= loanPurposeList.size())
+                        .map(i -> databaseService.getLoanPurposeIdByName(loanPurposeList.get(i - 1)))
+                        .collect(Collectors.toList());
+            }
+
+            List<Integer> propertyTypeIds = null;
+            if (propertyTypes != null && !propertyTypes.isEmpty()) {
+                List<String> propertyTypeList = databaseService.getPropertyTypeList();
+                propertyTypeIds = propertyTypes.stream()
+                        .filter(i -> i > 0 && i <= propertyTypeList.size())
+                        .map(i -> databaseService.getPropertyTypeIdByName(propertyTypeList.get(i - 1)))
+                        .collect(Collectors.toList());
+            }
+
+            // Get filtered list using converted IDs
+            allPreliminaries = preliminaryService.getFilteredPreliminaries(
+                    msamdIds,
+                    minIncomeDebtRatio,
+                    maxIncomeDebtRatio,
+                    countyIds,
+                    loanTypeIds,
+                    minTractIncome,
+                    maxTractIncome,
+                    loanPurposeIds,
+                    propertyTypeIds,
+                    ownerOccupancy);
+
+            updateCache(allPreliminaries, msamd, minIncomeDebtRatio, maxIncomeDebtRatio,
+                    counties, loanTypes, minTractIncome, maxTractIncome,
+                    loanPurposes, propertyTypes, ownerOccupancy);
+
+        } else {
+            // Use cached data
+            allPreliminaries = cachedPreliminaries;
+        }
 
         int totalCount = allPreliminaries.size();
         int totalLoanAmountSum = allPreliminaries.stream()
@@ -180,6 +231,8 @@ public class PreliminaryController {
             // Save to database
             preliminaryService.createMortgage(preliminary);
 
+            clearCache();
+
             return ResponseEntity.ok().body("Mortgage created successfully");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Error creating mortgage: " + e.getMessage());
@@ -200,56 +253,77 @@ public class PreliminaryController {
             @RequestParam(required = false) Integer ownerOccupancy) {
         try {
             // Convert indices to IDs (reuse existing conversion logic)
-            List<Integer> msamdIds = null;
-            if (msamd != null && !msamd.isEmpty()) {
-                List<String> msamdList = databaseService.getMsamdList();
-                msamdIds = msamd.stream()
-                        .filter(i -> i > 0 && i <= msamdList.size())
-                        .map(i -> databaseService.getMsamdIdByName(msamdList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+            List<Preliminary> preliminaries;
 
-            List<Integer> countyIds = null;
-            if (counties != null && !counties.isEmpty()) {
-                List<String> countyList = databaseService.getCountyList();
-                countyIds = counties.stream()
-                        .filter(i -> i > 0 && i <= countyList.size())
-                        .map(i -> databaseService.getCountyIdByName(countyList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+            if (cachedPreliminaries == null || filtersChanged(msamd, minIncomeDebtRatio, maxIncomeDebtRatio,
+                    counties, loanTypes, minTractIncome, maxTractIncome, loanPurposes, propertyTypes, ownerOccupancy)) {
 
-            List<Integer> loanTypeIds = null;
-            if (loanTypes != null && !loanTypes.isEmpty()) {
-                List<String> loanTypeList = databaseService.getLoanTypeList();
-                loanTypeIds = loanTypes.stream()
-                        .filter(i -> i > 0 && i <= loanTypeList.size())
-                        .map(i -> databaseService.getLoanTypeIdByName(loanTypeList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+                List<Integer> msamdIds = null;
+                if (msamd != null && !msamd.isEmpty()) {
+                    List<String> msamdList = databaseService.getMsamdList();
+                    msamdIds = msamd.stream()
+                            .filter(i -> i > 0 && i <= msamdList.size())
+                            .map(i -> databaseService.getMsamdIdByName(msamdList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
 
-            List<Integer> loanPurposeIds = null;
-            if (loanPurposes != null && !loanPurposes.isEmpty()) {
-                List<String> loanPurposeList = databaseService.getLoanPurposeList();
-                loanPurposeIds = loanPurposes.stream()
-                        .filter(i -> i > 0 && i <= loanPurposeList.size())
-                        .map(i -> databaseService.getLoanPurposeIdByName(loanPurposeList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+                List<Integer> countyIds = null;
+                if (counties != null && !counties.isEmpty()) {
+                    List<String> countyList = databaseService.getCountyList();
+                    countyIds = counties.stream()
+                            .filter(i -> i > 0 && i <= countyList.size())
+                            .map(i -> databaseService.getCountyIdByName(countyList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
 
-            List<Integer> propertyTypeIds = null;
-            if (propertyTypes != null && !propertyTypes.isEmpty()) {
-                List<String> propertyTypeList = databaseService.getPropertyTypeList();
-                propertyTypeIds = propertyTypes.stream()
-                        .filter(i -> i > 0 && i <= propertyTypeList.size())
-                        .map(i -> databaseService.getPropertyTypeIdByName(propertyTypeList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+                List<Integer> loanTypeIds = null;
+                if (loanTypes != null && !loanTypes.isEmpty()) {
+                    List<String> loanTypeList = databaseService.getLoanTypeList();
+                    loanTypeIds = loanTypes.stream()
+                            .filter(i -> i > 0 && i <= loanTypeList.size())
+                            .map(i -> databaseService.getLoanTypeIdByName(loanTypeList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
 
-            // Get filtered mortgages
-            List<Preliminary> preliminaries = preliminaryService.getFilteredPreliminaries(
-                    msamdIds, minIncomeDebtRatio, maxIncomeDebtRatio,
-                    countyIds, loanTypeIds, minTractIncome, maxTractIncome,
-                    loanPurposeIds, propertyTypeIds, ownerOccupancy);
+                List<Integer> loanPurposeIds = null;
+                if (loanPurposes != null && !loanPurposes.isEmpty()) {
+                    List<String> loanPurposeList = databaseService.getLoanPurposeList();
+                    loanPurposeIds = loanPurposes.stream()
+                            .filter(i -> i > 0 && i <= loanPurposeList.size())
+                            .map(i -> databaseService.getLoanPurposeIdByName(loanPurposeList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
+
+                List<Integer> propertyTypeIds = null;
+                if (propertyTypes != null && !propertyTypes.isEmpty()) {
+                    List<String> propertyTypeList = databaseService.getPropertyTypeList();
+                    propertyTypeIds = propertyTypes.stream()
+                            .filter(i -> i > 0 && i <= propertyTypeList.size())
+                            .map(i -> databaseService.getPropertyTypeIdByName(propertyTypeList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
+
+                // Get filtered list using converted IDs
+                preliminaries = preliminaryService.getFilteredPreliminaries(
+                        msamdIds,
+                        minIncomeDebtRatio,
+                        maxIncomeDebtRatio,
+                        countyIds,
+                        loanTypeIds,
+                        minTractIncome,
+                        maxTractIncome,
+                        loanPurposeIds,
+                        propertyTypeIds,
+                        ownerOccupancy);
+
+                updateCache(preliminaries, msamd, minIncomeDebtRatio, maxIncomeDebtRatio,
+                        counties, loanTypes, minTractIncome, maxTractIncome,
+                        loanPurposes, propertyTypes, ownerOccupancy);
+
+            } else {
+                // Use cached data
+                preliminaries = cachedPreliminaries;
+            }
 
             if (preliminaries.isEmpty()) {
                 return ResponseEntity.badRequest().body("No mortgages found matching criteria");
@@ -314,56 +388,77 @@ public class PreliminaryController {
             @RequestParam(required = false) List<Integer> propertyTypes,
             @RequestParam(required = false) Integer ownerOccupancy) {
         try {
-            List<Integer> msamdIds = null;
-            if (msamd != null && !msamd.isEmpty()) {
-                List<String> msamdList = databaseService.getMsamdList();
-                msamdIds = msamd.stream()
-                        .filter(i -> i > 0 && i <= msamdList.size())
-                        .map(i -> databaseService.getMsamdIdByName(msamdList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+            List<Preliminary> preliminaries;
 
-            List<Integer> countyIds = null;
-            if (counties != null && !counties.isEmpty()) {
-                List<String> countyList = databaseService.getCountyList();
-                countyIds = counties.stream()
-                        .filter(i -> i > 0 && i <= countyList.size())
-                        .map(i -> databaseService.getCountyIdByName(countyList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+            if (cachedPreliminaries == null || filtersChanged(msamd, minIncomeDebtRatio, maxIncomeDebtRatio,
+                    counties, loanTypes, minTractIncome, maxTractIncome, loanPurposes, propertyTypes, ownerOccupancy)) {
 
-            List<Integer> loanTypeIds = null;
-            if (loanTypes != null && !loanTypes.isEmpty()) {
-                List<String> loanTypeList = databaseService.getLoanTypeList();
-                loanTypeIds = loanTypes.stream()
-                        .filter(i -> i > 0 && i <= loanTypeList.size())
-                        .map(i -> databaseService.getLoanTypeIdByName(loanTypeList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+                List<Integer> msamdIds = null;
+                if (msamd != null && !msamd.isEmpty()) {
+                    List<String> msamdList = databaseService.getMsamdList();
+                    msamdIds = msamd.stream()
+                            .filter(i -> i > 0 && i <= msamdList.size())
+                            .map(i -> databaseService.getMsamdIdByName(msamdList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
 
-            List<Integer> loanPurposeIds = null;
-            if (loanPurposes != null && !loanPurposes.isEmpty()) {
-                List<String> loanPurposeList = databaseService.getLoanPurposeList();
-                loanPurposeIds = loanPurposes.stream()
-                        .filter(i -> i > 0 && i <= loanPurposeList.size())
-                        .map(i -> databaseService.getLoanPurposeIdByName(loanPurposeList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+                List<Integer> countyIds = null;
+                if (counties != null && !counties.isEmpty()) {
+                    List<String> countyList = databaseService.getCountyList();
+                    countyIds = counties.stream()
+                            .filter(i -> i > 0 && i <= countyList.size())
+                            .map(i -> databaseService.getCountyIdByName(countyList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
 
-            List<Integer> propertyTypeIds = null;
-            if (propertyTypes != null && !propertyTypes.isEmpty()) {
-                List<String> propertyTypeList = databaseService.getPropertyTypeList();
-                propertyTypeIds = propertyTypes.stream()
-                        .filter(i -> i > 0 && i <= propertyTypeList.size())
-                        .map(i -> databaseService.getPropertyTypeIdByName(propertyTypeList.get(i - 1)))
-                        .collect(Collectors.toList());
-            }
+                List<Integer> loanTypeIds = null;
+                if (loanTypes != null && !loanTypes.isEmpty()) {
+                    List<String> loanTypeList = databaseService.getLoanTypeList();
+                    loanTypeIds = loanTypes.stream()
+                            .filter(i -> i > 0 && i <= loanTypeList.size())
+                            .map(i -> databaseService.getLoanTypeIdByName(loanTypeList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
 
-            // Get filtered mortgages
-            List<Preliminary> preliminaries = preliminaryService.getFilteredPreliminaries(
-                    msamdIds, minIncomeDebtRatio, maxIncomeDebtRatio,
-                    countyIds, loanTypeIds, minTractIncome, maxTractIncome,
-                    loanPurposeIds, propertyTypeIds, ownerOccupancy);
+                List<Integer> loanPurposeIds = null;
+                if (loanPurposes != null && !loanPurposes.isEmpty()) {
+                    List<String> loanPurposeList = databaseService.getLoanPurposeList();
+                    loanPurposeIds = loanPurposes.stream()
+                            .filter(i -> i > 0 && i <= loanPurposeList.size())
+                            .map(i -> databaseService.getLoanPurposeIdByName(loanPurposeList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
+
+                List<Integer> propertyTypeIds = null;
+                if (propertyTypes != null && !propertyTypes.isEmpty()) {
+                    List<String> propertyTypeList = databaseService.getPropertyTypeList();
+                    propertyTypeIds = propertyTypes.stream()
+                            .filter(i -> i > 0 && i <= propertyTypeList.size())
+                            .map(i -> databaseService.getPropertyTypeIdByName(propertyTypeList.get(i - 1)))
+                            .collect(Collectors.toList());
+                }
+
+                // Get filtered list using converted IDs
+                preliminaries = preliminaryService.getFilteredPreliminaries(
+                        msamdIds,
+                        minIncomeDebtRatio,
+                        maxIncomeDebtRatio,
+                        countyIds,
+                        loanTypeIds,
+                        minTractIncome,
+                        maxTractIncome,
+                        loanPurposeIds,
+                        propertyTypeIds,
+                        ownerOccupancy);
+
+                updateCache(preliminaries, msamd, minIncomeDebtRatio, maxIncomeDebtRatio,
+                        counties, loanTypes, minTractIncome, maxTractIncome,
+                        loanPurposes, propertyTypes, ownerOccupancy);
+
+            } else {
+                // Use cached data
+                preliminaries = cachedPreliminaries;
+            }
 
             if (preliminaries.isEmpty()) {
                 return ResponseEntity.badRequest().body("No mortgages found matching criteria");
@@ -375,6 +470,8 @@ public class PreliminaryController {
                 p.setPurchaserTypeName("Private securitization");
                 preliminaryService.saveMortgage(p);
             }
+
+            clearCache();
 
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Successfully updated " + preliminaries.size() + " mortgages");
