@@ -116,12 +116,24 @@ export const DataTable = () => {
   const [loanAmountSum, setLoanAmountSum] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAcceptingRate, setIsAcceptingRate] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isCreateMortgageOpen,
     onOpen: onOpenCreateMortgage,
     onClose: onCloseCreateMortgage,
   } = useDisclosure();
+
+  const {
+    isOpen: isRateModalOpen,
+    onOpen: onOpenRateModal,
+    onClose: onCloseRateModal,
+  } = useDisclosure();
+  const [isCalculatingRate, setIsCalculatingRate] = useState(false);
+  const [rateResult, setRateResult] = useState({ rate: null, cost: null });
+
+  const [loadedDataRanges, setLoadedDataRanges] = useState([]);
+  const [allData, setAllData] = useState([]);
 
   const [mortgageForm, setMortgageForm] = useState({
     income: null,
@@ -131,6 +143,91 @@ export const DataTable = () => {
     ethnicity: null,
     loanType: null,
   });
+
+  const handleCalculateRate = async () => {
+    try {
+      setIsCalculatingRate(true);
+
+      let filterString = "";
+
+      if (filters.msamd.length) {
+        filterString += `&msamd=${filters.msamd.map((f) => f.value).join(",")}`;
+      }
+
+      if (filters.county.length) {
+        filterString += `&counties=${filters.county
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.propertyType.length) {
+        filterString += `&propertyTypes=${filters.propertyType
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.loanType.length) {
+        filterString += `&loanTypes=${filters.loanType
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.loanPurpose.length) {
+        filterString += `&loanPurposes=${filters.loanPurpose
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.incomeToDebtRatioMin.length) {
+        filterString += `&minIncomeDebtRatio=${filters.incomeToDebtRatioMin}`;
+      } else if (filters.incomeToDebtRatioMax.length) {
+        filterString += `&minIncomeDebtRatio=0`;
+      }
+
+      if (filters.incomeToDebtRatioMax.length) {
+        filterString += `&maxIncomeDebtRatio=${filters.incomeToDebtRatioMax}`;
+      } else if (filters.incomeToDebtRatioMin) {
+        filterString += `&maxIncomeDebtRatio=100}`;
+      }
+
+      if (filters.tractToMsamdIncomeMin.length) {
+        filterString += `&minTractIncome=${filters.tractToMsamdIncomeMin}`;
+      }
+
+      if (filters.tractToMsamdIncomeMax.length) {
+        filterString += `&maxTractIncome=${filters.tractToMsamdIncomeMax}`;
+      }
+
+      if (filters.ownerOccupied.length) {
+        filterString += `&ownerOccupancy=${
+          filters.ownerOccupied == "Yes" ? 1 : 0
+        }`;
+      }
+
+      const req =
+        filterString.length > 0
+          ? `http://localhost:8080/api/calculate-rate?${filterString.substring(
+              1
+            )}`
+          : `http://localhost:8080/api/calculate-rate`;
+
+      const response = await axios.get(req);
+      setRateResult(response.data);
+      onOpenRateModal();
+    } catch (error) {
+      console.error("Error calculating rate:", error);
+      toast({
+        title: "Error",
+        description: "Failed to calculate rate. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    } finally {
+      setIsCalculatingRate(false);
+    }
+  };
 
   const handleMortgageFormChange = (e) => {
     const { name, value } = e.target;
@@ -222,8 +319,103 @@ export const DataTable = () => {
     }
   };
 
-  const [loadedDataRanges, setLoadedDataRanges] = useState([]);
-  const [allData, setAllData] = useState([]);
+  const handleAcceptRate = async () => {
+    try {
+      setIsAcceptingRate(true);
+
+      let filterString = "";
+      if (filters.msamd.length) {
+        filterString += `&msamd=${filters.msamd.map((f) => f.value).join(",")}`;
+      }
+
+      if (filters.county.length) {
+        filterString += `&counties=${filters.county
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.propertyType.length) {
+        filterString += `&propertyTypes=${filters.propertyType
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.loanType.length) {
+        filterString += `&loanTypes=${filters.loanType
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.loanPurpose.length) {
+        filterString += `&loanPurposes=${filters.loanPurpose
+          .map((f) => f.value)
+          .join(",")}`;
+      }
+
+      if (filters.incomeToDebtRatioMin.length) {
+        filterString += `&minIncomeDebtRatio=${filters.incomeToDebtRatioMin}`;
+      } else if (filters.incomeToDebtRatioMax.length) {
+        filterString += `&minIncomeDebtRatio=0`;
+      }
+
+      if (filters.incomeToDebtRatioMax.length) {
+        filterString += `&maxIncomeDebtRatio=${filters.incomeToDebtRatioMax}`;
+      } else if (filters.incomeToDebtRatioMin) {
+        filterString += `&maxIncomeDebtRatio=100}`;
+      }
+
+      if (filters.tractToMsamdIncomeMin.length) {
+        filterString += `&minTractIncome=${filters.tractToMsamdIncomeMin}`;
+      }
+
+      if (filters.tractToMsamdIncomeMax.length) {
+        filterString += `&maxTractIncome=${filters.tractToMsamdIncomeMax}`;
+      }
+
+      if (filters.ownerOccupied.length) {
+        filterString += `&ownerOccupancy=${
+          filters.ownerOccupied == "Yes" ? 1 : 0
+        }`;
+      }
+
+      const req =
+        filterString.length > 0
+          ? `http://localhost:8080/api/accept-rate?${filterString.substring(1)}`
+          : `http://localhost:8080/api/accept-rate`;
+
+      const response = await axios.post(req);
+
+      // Reset data
+      setAllData([]);
+      setLoadedDataRanges([]);
+      setCurrentPage(1);
+
+      // Close modal
+      onCloseRateModal();
+
+      // Show success toast
+      toast({
+        title: "Success",
+        description: `Successfully updated ${response.data.count} mortgages`,
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    } catch (error) {
+      console.error("Error accepting rate:", error);
+      toast({
+        title: "Error",
+        description: "Failed to accept rate. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    } finally {
+      setIsAcceptingRate(false);
+    }
+  };
 
   const fetchData = async (pageNum) => {
     try {
@@ -479,6 +671,16 @@ export const DataTable = () => {
           <HStack spacing="8px" w="full" justifyContent="space-between">
             <HStack spacing="8px">
               <Button
+                onClick={handleCalculateRate}
+                colorScheme="yellow"
+                size="sm"
+                isLoading={isCalculatingRate}
+                loadingText="Calculating"
+                disabled={isCalculatingRate}
+              >
+                Calculate Rate
+              </Button>
+              <Button
                 onClick={onOpenCreateMortgage}
                 colorScheme="green"
                 size="sm"
@@ -644,6 +846,45 @@ export const DataTable = () => {
           )}
         </VStack>
       </Container>
+
+      <Modal isOpen={isRateModalOpen} onClose={onCloseRateModal}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Rate Calculation Results</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <Box>
+                <Text fontWeight="bold">Rate:</Text>
+                <Text fontSize="xl">{rateResult.rate}%</Text>
+              </Box>
+              <Box>
+                <Text fontWeight="bold">Cost:</Text>
+                <Text fontSize="xl">${rateResult.cost?.toLocaleString()}</Text>
+              </Box>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button
+              colorScheme="blue"
+              mr={3}
+              onClick={handleAcceptRate}
+              isLoading={isAcceptingRate}
+              loadingText="Accepting"
+              disabled={isAcceptingRate}
+            >
+              Accept
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={onCloseRateModal}
+              disabled={isAcceptingRate}
+            >
+              Cancel
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
 
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />

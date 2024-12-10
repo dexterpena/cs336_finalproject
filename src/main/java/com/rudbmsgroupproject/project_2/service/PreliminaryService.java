@@ -28,10 +28,15 @@ public class PreliminaryService {
             List<Integer> loanPurposes,
             List<Integer> propertyTypes,
             Integer ownerOccupancy) {
-        return preliminaryRepository.findFilteredPreliminaries(msamd, minIncomeDebtRatio, maxIncomeDebtRatio, counties, loanTypes, minTractIncome, maxTractIncome, loanPurposes, propertyTypes, ownerOccupancy);
+        return preliminaryRepository.findFilteredPreliminaries(msamd, minIncomeDebtRatio, maxIncomeDebtRatio, counties,
+                loanTypes, minTractIncome, maxTractIncome, loanPurposes, propertyTypes, ownerOccupancy);
     }
 
     public Preliminary createMortgage(Preliminary preliminary) {
         return preliminaryRepository.save(preliminary);
+    }
+
+    public void saveMortgage(Preliminary preliminary) {
+        preliminaryRepository.save(preliminary);
     }
 }

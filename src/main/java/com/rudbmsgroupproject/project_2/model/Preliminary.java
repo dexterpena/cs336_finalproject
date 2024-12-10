@@ -180,7 +180,7 @@ public class Preliminary {
     private String purchaserTypeName;
 
     @Column(name = "purchaser_type")
-    private Short purchaserType;
+    private Integer purchaserType;
 
     @Column(name = "denial_reason_name_1")
     private String denialReasonName1;
@@ -213,7 +213,7 @@ public class Preliminary {
     private String lienStatusName;
 
     @Column(name = "lien_status")
-    private Short lienStatus;
+    private Integer lienStatus;
 
     @Column(name = "edit_status_name")
     private String editStatusName;
@@ -706,11 +706,11 @@ public class Preliminary {
         this.purchaserTypeName = purchaserTypeName;
     }
 
-    public Short getPurchaserType() {
+    public Integer getPurchaserType() {
         return purchaserType;
     }
 
-    public void setPurchaserType(Short purchaserType) {
+    public void setPurchaserType(Integer purchaserType) {
         this.purchaserType = purchaserType;
     }
 
@@ -794,11 +794,11 @@ public class Preliminary {
         this.lienStatusName = lienStatusName;
     }
 
-    public Short getLienStatus() {
+    public Integer getLienStatus() {
         return lienStatus;
     }
 
-    public void setLienStatus(Short lienStatus) {
+    public void setLienStatus(Integer lienStatus) {
         this.lienStatus = lienStatus;
     }
 
