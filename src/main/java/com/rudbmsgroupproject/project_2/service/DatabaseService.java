@@ -89,6 +89,14 @@ public class DatabaseService {
         return getNameById("property_type", "property_type", "property_type_name", id);
     }
 
+    public String getApplicantSexNameById(int id) {
+        return getNameById("applicant_sex", "applicant_sex", "applicant_sex_name", id);
+    }
+
+    public String getApplicantEthnicityNameById(int id) {
+        return getNameById("applicant_ethnicity", "applicant_ethnicity", "applicant_ethnicity_name", id);
+    }
+
     private String getNameById(String tableName, String idColumn, String nameColumn, Number id) {
         String query = "SELECT " + nameColumn + " FROM " + tableName + " WHERE " + idColumn + " = ?";
         try (Connection connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);

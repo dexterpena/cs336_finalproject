@@ -30,4 +30,8 @@ public class PreliminaryService {
             Integer ownerOccupancy) {
         return preliminaryRepository.findFilteredPreliminaries(msamd, minIncomeDebtRatio, maxIncomeDebtRatio, counties, loanTypes, minTractIncome, maxTractIncome, loanPurposes, propertyTypes, ownerOccupancy);
     }
+
+    public Preliminary createMortgage(Preliminary preliminary) {
+        return preliminaryRepository.save(preliminary);
+    }
 }

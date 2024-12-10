@@ -20,11 +20,12 @@ public interface PreliminaryRepository extends JpaRepository<Preliminary, Intege
             "(p.applicantIncome000s / p.loanAmount000s) BETWEEN :minIncomeDebtRatio AND :maxIncomeDebtRatio) AND " +
             "(:counties IS NULL OR p.countyCode IN :counties) AND " +
             "(:loanTypes IS NULL OR p.loanType IN :loanTypes) AND " +
-            "(:minTractIncome IS NULL OR p.tractToMsamdIncome >= :minTractIncome) AND " +  // Changed to separate conditions
-            "(:maxTractIncome IS NULL OR p.tractToMsamdIncome <= :maxTractIncome) AND " +  // Changed to separate conditions
+            "(:minTractIncome IS NULL OR p.tractToMsamdIncome >= :minTractIncome) AND " +
+            "(:maxTractIncome IS NULL OR p.tractToMsamdIncome <= :maxTractIncome) AND " +
             "(:loanPurposes IS NULL OR p.loanPurpose IN :loanPurposes) AND " +
             "(:propertyTypes IS NULL OR p.propertyType IN :propertyTypes) AND " +
-            "(:ownerOccupancy IS NULL OR p.ownerOccupancy = :ownerOccupancy)")
+            "(:ownerOccupancy IS NULL OR p.ownerOccupancy = :ownerOccupancy) " +
+            "ORDER BY p.applicationId ASC")
     List<Preliminary> findFilteredPreliminaries(
             @Param("msamd") List<Integer> msamd,
             @Param("minIncomeDebtRatio") Double minIncomeDebtRatio,

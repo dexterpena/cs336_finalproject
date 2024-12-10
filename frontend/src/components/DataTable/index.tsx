@@ -32,6 +32,7 @@ import {
   useDisclosure,
   Spinner,
   Center,
+  useToast,
 } from "@chakra-ui/react";
 import axios from "axios";
 
@@ -100,11 +101,12 @@ const initialFilters = {
   ownerOccupied: "",
 };
 
-// Constants for pagination
-const FRONTEND_ITEMS_PER_PAGE = 100; // How many items we show per page
-const BACKEND_ITEMS_PER_PAGE = 1000; // How many items we get from backend per request
+const FRONTEND_ITEMS_PER_PAGE = 100;
+const BACKEND_ITEMS_PER_PAGE = 1000;
 
 export const DataTable = () => {
+  const toast = useToast();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState(initialFilters);
   const [changeFilters, setChangeFilters] = useState(initialFilters);
@@ -113,6 +115,7 @@ export const DataTable = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [loanAmountSum, setLoanAmountSum] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isCreateMortgageOpen,
@@ -121,12 +124,12 @@ export const DataTable = () => {
   } = useDisclosure();
 
   const [mortgageForm, setMortgageForm] = useState({
-    income: "",
-    loanAmount: "",
-    msamd: "",
-    sex: "",
-    ethnicity: "",
-    loanType: "",
+    income: null,
+    loanAmount: null,
+    msamd: null,
+    sex: null,
+    ethnicity: null,
+    loanType: null,
   });
 
   const handleMortgageFormChange = (e) => {
@@ -141,18 +144,87 @@ export const DataTable = () => {
     const { name } = actionMeta;
     setMortgageForm((prevForm) => ({
       ...prevForm,
-      [name]: selectedOption ? selectedOption.value : "",
+      [name]: selectedOption.value ? selectedOption : null,
     }));
   };
 
-  const handleSubmitMortgage = () => {
-    // Submit function to be implemented
+  const handleSubmitMortgage = async () => {
+    try {
+      setIsSubmitting(true);
+
+      let invalidInput = false;
+      for (const key in mortgageForm) {
+        if (mortgageForm[key] == null) {
+          toast({
+            title: "Error",
+            description: "You must specify all fields.",
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "top",
+          });
+          invalidInput = true;
+          return;
+        }
+      }
+      if (invalidInput) return;
+
+      const requestBody = {
+        applicantIncome000s: Number(mortgageForm.income),
+        loanAmount000s: Number(mortgageForm.loanAmount),
+        msamd: Number(mortgageForm.msamd.value),
+        applicantSex: Number(mortgageForm.sex.value),
+        applicantEthnicity: Number(mortgageForm.ethnicity.value),
+        loanType: Number(mortgageForm.loanType.value),
+      };
+
+      const response = await axios.post(
+        "http://localhost:8080/api/create-mortgage",
+        requestBody
+      );
+
+      if (response.status === 200) {
+        onCloseCreateMortgage();
+        setMortgageForm({
+          income: null,
+          loanAmount: null,
+          msamd: null,
+          sex: null,
+          ethnicity: null,
+          loanType: null,
+        });
+
+        setAllData([]);
+        setLoadedDataRanges([]);
+        setCurrentPage(1);
+
+        toast({
+          title: "Success",
+          description: "Mortgage created successfully!",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating mortgage:", error);
+      toast({
+        title: "Error",
+        description: "Failed to create mortgage. Please try again.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const [loadedDataRanges, setLoadedDataRanges] = useState([]);
   const [allData, setAllData] = useState([]);
 
-  // Update fetchData function
   const fetchData = async (pageNum) => {
     try {
       setIsLoading(true);
@@ -225,10 +297,8 @@ export const DataTable = () => {
         loanAmountSum: loanAmountSumFromApi,
       } = response.data;
 
-      // Calculate frontend total pages based on total count
       const frontendTotalPages = Math.ceil(count / FRONTEND_ITEMS_PER_PAGE);
 
-      // Update loaded ranges with the actual received data length
       setLoadedDataRanges((prev) => [
         ...prev,
         {
@@ -238,7 +308,6 @@ export const DataTable = () => {
         },
       ]);
 
-      // Merge new data with correct indexing
       setAllData((prev) => {
         const newData = [...prev];
         responseData.forEach((item, index) => {
@@ -258,14 +327,12 @@ export const DataTable = () => {
     }
   };
 
-  // Add new effect for filter changes only
   useEffect(() => {
-    setAllData([]); // Reset all data
-    setLoadedDataRanges([]); // Reset loaded ranges
-    setCurrentPage(1); // Reset to first page
-  }, [filters]); // Only run when filters change
+    setAllData([]);
+    setLoadedDataRanges([]);
+    setCurrentPage(1);
+  }, [filters]);
 
-  // Keep existing effect for pagination (unchanged)
   useEffect(() => {
     const frontendStartIndex = (currentPage - 1) * FRONTEND_ITEMS_PER_PAGE;
     const frontendEndIndex = frontendStartIndex + FRONTEND_ITEMS_PER_PAGE - 1;
@@ -292,13 +359,12 @@ export const DataTable = () => {
         fetchData(page);
       });
     }
-  }, [currentPage, loadedDataRanges]); // Remove filters from this dependency array
+  }, [currentPage, loadedDataRanges]);
 
-  // Update data slice calculation
   const getCurrentPageData = () => {
     const startIndex = (currentPage - 1) * FRONTEND_ITEMS_PER_PAGE;
     const endIndex = startIndex + FRONTEND_ITEMS_PER_PAGE;
-    return allData.slice(startIndex, endIndex).filter(Boolean); // Filter out any undefined entries
+    return allData.slice(startIndex, endIndex).filter(Boolean);
   };
 
   const currentData = getCurrentPageData();
@@ -477,6 +543,7 @@ export const DataTable = () => {
               <Table variant="simple" w="full">
                 <Thead>
                   <Tr>
+                    <Th>ID</Th>
                     <Th>As of Year</Th>
                     <Th>Agency</Th>
                     <Th>Loan Type</Th>
@@ -502,20 +569,18 @@ export const DataTable = () => {
                     <Th>Rate Spread</Th>
                     <Th>HOEPA Status</Th>
                     <Th>Lien Status</Th>
-                    <Th>Edit Status</Th>
-                    <Th>Sequence Number</Th>
                     <Th>Population</Th>
                     <Th>Minority Population</Th>
                     <Th>HUD Median Family Income</Th>
                     <Th>Tract to MSAMD Income</Th>
                     <Th>Owner Occupied Units</Th>
                     <Th>1-4 Family Units</Th>
-                    <Th>Application Date Indicator</Th>
                   </Tr>
                 </Thead>
                 <Tbody>
                   {currentData.map((d, index) => (
                     <Tr key={index}>
+                      <Td>{d.applicationId}</Td>
                       <Td>{d.asOfYear}</Td>
                       <Td>{d.agencyName}</Td>
                       <Td>{d.loanTypeName}</Td>
@@ -552,15 +617,12 @@ export const DataTable = () => {
                       <Td>{d.rateSpread}</Td>
                       <Td>{d.hoepaStatusName}</Td>
                       <Td>{d.lienStatusName}</Td>
-                      <Td>{d.editStatusName}</Td>
-                      <Td>{d.sequenceNumber}</Td>
                       <Td>{d.population}</Td>
                       <Td>{d.minorityPopulation}</Td>
                       <Td>{d.hudMedianFamilyIncome}</Td>
                       <Td>{d.tractToMsamdIncome}</Td>
                       <Td>{d.numberOfOwnerOccupiedUnits}</Td>
                       <Td>{d.numberOf1To4FamilyUnits}</Td>
-                      <Td>{d.applicationDateIndicator}</Td>
                     </Tr>
                   ))}
                 </Tbody>
@@ -866,18 +928,26 @@ export const DataTable = () => {
               <Select
                 placeholder="Select MSAMD"
                 name="msamd"
-                value={
-                  mortgageForm.msamd
-                    ? { value: mortgageForm.msamd, label: mortgageForm.msamd }
-                    : null
-                }
+                value={mortgageForm.msamd}
                 onChange={(selectedOption) =>
                   handleSelectChangeMortgage(selectedOption, { name: "msamd" })
                 }
                 options={[
-                  { value: "MSAMD1", label: "MSAMD1" },
-                  { value: "MSAMD2", label: "MSAMD2" },
-                  { value: "MSAMD3", label: "MSAMD3" },
+                  { value: "1", label: "Newark - NJ, PA" },
+                  { value: "2", label: "Trenton - NJ" },
+                  {
+                    value: "3",
+                    label: "New York, Jersey City, White Plains - NY, NJ",
+                  },
+                  { value: "4", label: "Wilmington - DE, MD, NJ" },
+                  { value: "5", label: "Vineland, Bridgeton - NJ" },
+                  { value: "6", label: "Ocean City - NJ" },
+                  { value: "7", label: "Camden - NJ" },
+                  { value: "8", label: "Atlantic City, Hammonton - NJ" },
+                  {
+                    value: "9",
+                    label: "Allentown, Bethlehem, Easton - PA, NJ",
+                  },
                 ]}
                 styles={customStyles}
               />
@@ -887,17 +957,14 @@ export const DataTable = () => {
               <Select
                 placeholder="Select Sex"
                 name="sex"
-                value={
-                  mortgageForm.sex
-                    ? { value: mortgageForm.sex, label: mortgageForm.sex }
-                    : null
-                }
+                value={mortgageForm.sex}
                 onChange={(selectedOption) =>
                   handleSelectChangeMortgage(selectedOption, { name: "sex" })
                 }
                 options={[
-                  { value: "Male", label: "Male" },
-                  { value: "Female", label: "Female" },
+                  { value: "1", label: "Male" },
+                  { value: "2", label: "Female" },
+                  { value: "3", label: "Information not provided" },
                 ]}
                 styles={customStyles}
               />
@@ -907,22 +974,16 @@ export const DataTable = () => {
               <Select
                 placeholder="Select Ethnicity"
                 name="ethnicity"
-                value={
-                  mortgageForm.ethnicity
-                    ? {
-                        value: mortgageForm.ethnicity,
-                        label: mortgageForm.ethnicity,
-                      }
-                    : null
-                }
+                value={mortgageForm.ethnicity}
                 onChange={(selectedOption) =>
                   handleSelectChangeMortgage(selectedOption, {
                     name: "ethnicity",
                   })
                 }
                 options={[
-                  { value: "Hispanic", label: "Hispanic" },
-                  { value: "Non-Hispanic", label: "Non-Hispanic" },
+                  { value: "1", label: "Hispanic or Latino" },
+                  { value: "2", label: "Not Hispanic or Latino" },
+                  { value: "3", label: "Information not provided" },
                 ]}
                 styles={customStyles}
               />
@@ -932,33 +993,38 @@ export const DataTable = () => {
               <Select
                 placeholder="Select Loan Type"
                 name="loanType"
-                value={
-                  mortgageForm.loanType
-                    ? {
-                        value: mortgageForm.loanType,
-                        label: mortgageForm.loanType,
-                      }
-                    : null
-                }
+                value={mortgageForm.loanType}
                 onChange={(selectedOption) =>
                   handleSelectChangeMortgage(selectedOption, {
                     name: "loanType",
                   })
                 }
                 options={[
-                  { value: "Type1", label: "Type1" },
-                  { value: "Type2", label: "Type2" },
-                  { value: "Type3", label: "Type3" },
+                  { value: "1", label: "VA-guaranteed" },
+                  { value: "2", label: "FSA/RHS-guaranteed" },
+                  { value: "3", label: "Conventional" },
+                  { value: "4", label: "FHA-insured" },
                 ]}
                 styles={customStyles}
               />
             </FormControl>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={handleSubmitMortgage}>
+            <Button
+              colorScheme="blue"
+              mr={3}
+              onClick={handleSubmitMortgage}
+              isLoading={isSubmitting}
+              loadingText="Submitting"
+              disabled={isSubmitting}
+            >
               Submit
             </Button>
-            <Button variant="ghost" onClick={onCloseCreateMortgage}>
+            <Button
+              variant="ghost"
+              onClick={onCloseCreateMortgage}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
           </ModalFooter>

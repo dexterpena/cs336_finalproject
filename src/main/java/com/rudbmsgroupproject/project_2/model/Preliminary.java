@@ -30,7 +30,7 @@ public class Preliminary {
     private String loanTypeName;
 
     @Column(name = "loan_type")
-    private Short loanType;
+    private Integer loanType;
 
     @Column(name = "property_type_name")
     private String propertyTypeName;
@@ -93,7 +93,7 @@ public class Preliminary {
     private String applicantEthnicityName;
 
     @Column(name = "applicant_ethnicity")
-    private Short applicantEthnicity;
+    private Integer applicantEthnicity;
 
     @Column(name = "co_applicant_ethnicity_name")
     private String coApplicantEthnicityName;
@@ -165,7 +165,7 @@ public class Preliminary {
     private String applicantSexName;
 
     @Column(name = "applicant_sex")
-    private Short applicantSex;
+    private Integer applicantSex;
 
     @Column(name = "co_applicant_sex_name")
     private String coApplicantSexName;
@@ -174,7 +174,7 @@ public class Preliminary {
     private Short coApplicantSex;
 
     @Column(name = "applicant_income_000s")
-    private Double applicantIncome000s;
+    private Integer applicantIncome000s;
 
     @Column(name = "purchaser_type_name")
     private String purchaserTypeName;
@@ -306,11 +306,11 @@ public class Preliminary {
         this.loanTypeName = loanTypeName;
     }
 
-    public Short getLoanType() {
+    public Integer getLoanType() {
         return loanType;
     }
 
-    public void setLoanType(Short loanType) {
+    public void setLoanType(Integer loanType) {
         this.loanType = loanType;
     }
 
@@ -474,11 +474,11 @@ public class Preliminary {
         this.applicantEthnicityName = applicantEthnicityName;
     }
 
-    public Short getApplicantEthnicity() {
+    public Integer getApplicantEthnicity() {
         return applicantEthnicity;
     }
 
-    public void setApplicantEthnicity(Short applicantEthnicity) {
+    public void setApplicantEthnicity(Integer applicantEthnicity) {
         this.applicantEthnicity = applicantEthnicity;
     }
 
@@ -666,11 +666,11 @@ public class Preliminary {
         this.applicantSexName = applicantSexName;
     }
 
-    public Short getApplicantSex() {
+    public Integer getApplicantSex() {
         return applicantSex;
     }
 
-    public void setApplicantSex(Short applicantSex) {
+    public void setApplicantSex(Integer applicantSex) {
         this.applicantSex = applicantSex;
     }
 
@@ -690,11 +690,11 @@ public class Preliminary {
         this.coApplicantSex = coApplicantSex;
     }
 
-    public Double getApplicantIncome000s() {
+    public Integer getApplicantIncome000s() {
         return applicantIncome000s;
     }
 
-    public void setApplicantIncome000s(Double applicantIncome000s) {
+    public void setApplicantIncome000s(Integer applicantIncome000s) {
         this.applicantIncome000s = applicantIncome000s;
     }
 
