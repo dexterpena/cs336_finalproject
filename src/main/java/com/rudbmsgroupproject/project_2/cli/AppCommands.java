@@ -13,9 +13,12 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.text.DecimalFormat;
 
 @ShellComponent
 public class AppCommands {
+
+    DecimalFormat df = new DecimalFormat("#,###.00");
 
     @Autowired
     private PreliminaryService preliminaryService;
@@ -428,7 +431,8 @@ public class AppCommands {
                 System.out.println("----------------------------");
             });
             System.out.println("\nNumber of rows: " + numberOfRows);
-            System.out.println("Sum of Loan Amounts (000s): " + sumOfLoanAmounts);
+            String formattedSumOfLoanAmounts = df.format(sumOfLoanAmounts);
+            System.out.println("Sum of Loan Amounts (000s): " + formattedSumOfLoanAmounts);
         }
     }
 
@@ -536,15 +540,18 @@ public class AppCommands {
         for (Preliminary preliminary : preliminaries) {
             Integer loanAmount = preliminary.getLoanAmount000s();
             if (loanAmount == null) {
-                continue; // Skip this entry if loanAmount is null
+                continue;
             }
 
             double rateSpread = preliminary.getRateSpread() != null ? preliminary.getRateSpread() : 0;
+            Integer lienStatus = preliminary.getLienStatus();
             if (rateSpread == 0) {
-                if (preliminary.getLienStatus() == 1) {
-                    rateSpread = 1.5;
-                } else if (preliminary.getLienStatus() == 2) {
-                    rateSpread = 3.5;
+                if (lienStatus != null) {
+                    if (lienStatus == 1) {
+                        rateSpread = 1.5;
+                    } else if (lienStatus == 2) {
+                        rateSpread = 3.5;
+                    }
                 }
             }
             double rate = baseRate + rateSpread;
@@ -561,36 +568,38 @@ public class AppCommands {
         weightedAverageRate = Math.round(weightedAverageRate * 100.0) / 100.0;
         totalLoanAmount = Math.round(totalLoanAmount * 100.0) / 100.0;
 
-        System.out.println("\nWeighted Average Rate: " + weightedAverageRate + "%");
-        System.out.println("Total Cost of Securitization: " + totalLoanAmount + " (000s)");
+        String formattedTotalLoanAmount = df.format(totalLoanAmount);
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            System.out.print("Do you accept the rate and total cost? (yes/no): ");
-            String response = scanner.nextLine();
-            if (response.equalsIgnoreCase("yes")) {
-                try (Connection connection = databaseService.connectToDatabase()) {
-                    connection.setAutoCommit(false);
-                    try {
-                        for (Preliminary preliminary : preliminaries) {
-                            String updateQuery = "UPDATE preliminary SET purchaser_type = ? WHERE application_id = ?";
-                            try (PreparedStatement statement = connection.prepareStatement(updateQuery)) {
-                                statement.setShort(1, (short) 5); // Assuming 5 is the code for private securitization
-                                statement.setInt(2, preliminary.getApplicationId());
-                                statement.executeUpdate();
-                            }
-                        }
-                        connection.commit();
-                        System.out.println("Rate accepted and database updated.");
-                    } catch (SQLException e) {
-                        connection.rollback();
-                        System.err.println("Error updating database: " + e.getMessage());
+
+        System.out.println("\nWeighted Average Rate: " + weightedAverageRate + "%");
+        System.out.println("Total Cost of Securitization: " + formattedTotalLoanAmount + " (000s)");
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Do you accept the rate and total cost? (yes/no): ");
+        String response = scanner.nextLine();
+        if (response.equalsIgnoreCase("yes")) {
+            System.out.println("User accepted the rate. Proceeding with database update...");
+            try (Connection connection = databaseService.connectToDatabase()) {
+                connection.setAutoCommit(false);
+                connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+                try {
+                    String updateQuery = "UPDATE preliminary SET purchaser_type = ?, purchaser_type_name = ? WHERE application_id IN (SELECT application_id FROM preliminary WHERE lien_status IS NOT NULL)";
+                    try (PreparedStatement statement = connection.prepareStatement(updateQuery)) {
+                        statement.setShort(1, (short) 5); // Assuming 5 is the code for private securitization
+                        statement.setString(2, "Private securitization");
+                        statement.executeUpdate();
                     }
+                    connection.commit();
+                    System.out.println("Rate accepted and database updated.");
                 } catch (SQLException e) {
-                    System.err.println("Database connection error: " + e.getMessage());
+                    connection.rollback();
+                    System.err.println("Error updating database: " + e.getMessage());
                 }
-            } else {
-                System.out.println("Rate declined. Returning to main menu.");
+            } catch (SQLException e) {
+                System.err.println("Database connection error: " + e.getMessage());
             }
+        } else {
+            System.out.println("Rate declined. Returning to main menu.");
         }
     }
 
